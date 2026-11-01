@@ -9,8 +9,10 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project               = var.project_id
+  region                = var.region
+  user_project_override = true # needed for the Billing Budgets API with user credentials
+  billing_project       = var.project_id
 }
 
 data "google_project" "this" {}
