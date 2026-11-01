@@ -33,3 +33,10 @@ def test_relative_and_year():
 def test_plain_query_untouched():
     f = parse_rules("black hoodie", TODAY)
     assert f.semantic_query == "black hoodie" and not f.has_filters()
+
+
+def test_bare_season_is_most_recent_and_adjectives_stay_semantic():
+    f = parse_rules("photos from winter", TODAY)  # winter 2026/27 hasn't started yet
+    assert (f.date_from, f.date_to) == (date(2025, 12, 1), date(2026, 2, 28))
+    f = parse_rules("winter street covered in snow", TODAY)  # descriptive, not a date
+    assert f.date_from is None and "winter" in f.semantic_query

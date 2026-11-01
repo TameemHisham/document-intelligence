@@ -86,9 +86,19 @@ def parse_rules(q: str, today: date | None = None) -> QueryFilters:
             start = today - timedelta(days=today.weekday() + (7 if which == "last" else 0))
             f.date_from, f.date_to = start, start + timedelta(days=6)
         cut(m)
-    elif m := re.search(r"\b(?:in|from|during)?\s*(?:(last|this)\s+)?(spring|summer|autumn|fall|winter)\b", rest, re.I):
-        a, b = SEASONS[m.group(2).lower()]
-        y = year or (today.year - 1 if m.group(1) and m.group(1).lower() == "last" else today.year)
+    # Needs "in/from/during" or "last/this": in "winter street" the season describes the picture, not a date.
+    elif m := re.search(r"\b(?:(?:in|from|during)\s+(?:the\s+)?(?:(last|this)\s+)?|(last|this)\s+)"
+                        r"(spring|summer|autumn|fall|winter)\b", rest, re.I):
+        which = (m.group(1) or m.group(2) or "").lower()
+        a, b = SEASONS[m.group(3).lower()]
+        if year:
+            y = year
+        elif which == "last":
+            y = today.year - 1
+        elif which == "this":
+            y = today.year
+        else:  # bare season: the most recent one that has started
+            y = today.year if date(today.year, a, 1) <= today else today.year - 1
         f.date_from = date(y, a, 1)
         f.date_to = _month_range(y + (1 if b < a else 0), b)[1]
         cut(m)
