@@ -28,6 +28,7 @@ SERIAL_RE = re.compile(r"\bserial\s*(?:no\.?|number|#)?\s*[:#]?\s*((?=[A-Z0-9-]*
 CODE_RE = re.compile(r"\b(?=[A-Z0-9-]*\d)(?=[A-Z0-9-]*[A-Z])[A-Z0-9]{2,}(?:-[A-Z0-9]+)+\b")  # e.g. AB7-4821-9930
 AMOUNT_RE = re.compile(r"(?:€|\$|£|EUR|USD|GBP)?\s*\d[\d,]*\.\d{2}\b")
 DURATION_RE = re.compile(r"(\d+|one|two|three|four|five|ten)[\s-]*(year|month)s?", re.I)
+NUMERIC_DATE_RE = re.compile(r"\b\d{1,2}[/.-]\d{1,2}[/.-]\d{4}\b")
 WORDNUM = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "ten": 10}
 
 
@@ -56,9 +57,10 @@ def _parse_date(text: str) -> date | None:
     if not CALENDAR_RE.search(text):
         return None
     try:
-        return dateparser.parse(text, dayfirst=True, fuzzy=True, default=None).date()
+        d = dateparser.parse(text, dayfirst=True, fuzzy=True, default=None).date()
     except (ValueError, OverflowError, AttributeError, TypeError):
         return None
+    return d if 1900 <= d.year <= 2100 else None  # "**** 4417" (card digits) is not a year
 
 
 def _parse_money(text: str) -> str:
@@ -98,6 +100,12 @@ def extract_fields(text: str) -> list[Field]:
             elif field == "money":
                 value = _parse_money(ent.text)
             add(Field(field, ent.label_, ent.text, value))
+
+    # spaCy often tags "31/10/2026 09:42" as CARDINAL, so catch numeric dates by pattern too.
+    for m in NUMERIC_DATE_RE.finditer(text):
+        if d := _parse_date(m.group(0)):
+            if not any(f.value == d.isoformat() for f in fields):
+                add(Field("date", "RULE", m.group(0), d.isoformat()))
 
     if total := _find_total(text):
         add(total)

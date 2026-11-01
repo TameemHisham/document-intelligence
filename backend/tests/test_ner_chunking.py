@@ -64,3 +64,9 @@ def test_serial_in_separate_column_and_needs_a_digit():
     f = by_field(extract_fields(VISION_WARRANTY))
     assert f["serial"].value == "AB7-4821-9930"
     assert f["expiry_date"].value == "2026-11-14"
+
+
+def test_numeric_receipt_date_found_and_card_digits_not_a_year():
+    dates = [f.value for f in extract_fields(VISION_RECEIPT) if f.field == "date"]
+    assert "2026-10-31" in dates
+    assert not any(d.startswith("4417") for d in dates)
