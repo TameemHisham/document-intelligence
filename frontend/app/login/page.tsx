@@ -3,11 +3,12 @@
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FolderOpen } from "lucide-react";
+import { FlaskConical, FolderOpen } from "lucide-react";
 import { api, getToken, json, setToken, type User } from "@/lib/api";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 const DEV_AUTH = process.env.NEXT_PUBLIC_DEV_AUTH === "true";
+const DEMO = process.env.NEXT_PUBLIC_DEMO === "true";
 
 type GoogleId = {
   initialize: (o: { client_id: string; callback: (r: { credential: string }) => void }) => void;
@@ -32,7 +33,7 @@ export default function LoginPage() {
   const finish = useCallback(
     async (path: string, body: object) => {
       try {
-        const res = await api<{ token: string; user: User }>(path, json("POST", body));
+        const res = await api<{ token: string; user: User }>(path, path === "/auth/guest" ? { method: "POST" } : json("POST", body));
         setToken(res.token);
         router.replace("/");
       } catch (e) {
@@ -62,6 +63,20 @@ export default function LoginPage() {
         <h1 className="font-serif text-3xl">Document Intelligence</h1>
         <p className="mb-6 mt-2 text-sm text-muted">A quiet library for your photos and documents, ready to answer questions.</p>
 
+        {DEMO && (
+          <>
+            <button
+              onClick={() => finish("/auth/guest", {})}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink py-3 text-sm font-medium text-white hover:opacity-90"
+            >
+              <FlaskConical className="h-4 w-4" /> Try the demo, no sign-up
+            </button>
+            <p className="mb-5 mt-2 text-xs text-muted">
+              You get a private sandbox with sample photos and documents. Search, sort, upload and ask questions. It resets after 24 hours.
+            </p>
+            <p className="eyebrow mb-3">Owner sign-in</p>
+          </>
+        )}
         {GOOGLE_CLIENT_ID ? (
           <div ref={buttonRef} className="flex justify-center" />
         ) : (

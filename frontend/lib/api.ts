@@ -56,12 +56,38 @@ export type CategorySuggestions = {
 };
 export type Source = { n: number; document_id: string; title: string; text: string };
 export type AskResult = { answer: string; sources: Source[] };
-export type User = { id: string; email: string; name: string; picture: string };
+export type User = {
+  id: string;
+  email: string;
+  name: string;
+  picture: string;
+  is_guest: boolean;
+  is_owner: boolean;
+  is_template: boolean;
+  expires_at: string | null;
+  demo_enabled: boolean;
+};
+export type Usage = {
+  month_spent_usd: number;
+  monthly_budget_usd: number;
+  demo?: { questions_left: number; uploads_left: number; expires_at: string };
+};
 
 const TOKEN_KEY = "di_token";
+const OWNER_TOKEN_KEY = "di_owner_token"; // kept while the owner edits the demo library
 export const getToken = () => (typeof window === "undefined" ? null : localStorage.getItem(TOKEN_KEY));
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+export const stashOwnerToken = () => {
+  const t = getToken();
+  if (t) localStorage.setItem(OWNER_TOKEN_KEY, t);
+};
+export const restoreOwnerToken = () => {
+  const t = localStorage.getItem(OWNER_TOKEN_KEY);
+  localStorage.removeItem(OWNER_TOKEN_KEY);
+  if (t) setToken(t);
+  return !!t;
+};
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

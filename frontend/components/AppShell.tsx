@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Camera, FolderKanban, FolderOpen, Images, Inbox, Layers, LogOut, Search, Star, UploadCloud } from "lucide-react";
-import { clearToken, getToken, type Category, type User } from "@/lib/api";
+import { Camera, FolderKanban, FolderOpen, Images, Inbox, Layers, LogOut, PencilRuler, Search, Star, UploadCloud } from "lucide-react";
+import { api, clearToken, getToken, stashOwnerToken, setToken, type Category, type Usage, type User } from "@/lib/api";
+import { DemoBanner } from "./DemoBanner";
 import { useApi } from "@/lib/hooks";
 
 const mobileNav = [
@@ -25,7 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const authed = !!useSyncExternalStore(noopSubscribe, getToken, () => null);
   const { data: user } = useApi<User>(authed ? "/auth/me" : null);
   const { data: categories } = useApi<Category[]>(authed ? `/categories?r=${pathname}` : null);
-  const { data: spend } = useApi<{ month_spent_usd: number; monthly_budget_usd: number }>(authed ? `/usage?r=${pathname}` : null);
+  const { data: spend } = useApi<Usage>(authed ? `/usage?r=${pathname}` : null);
 
   useEffect(() => {
     if (!getToken()) router.replace("/login");
@@ -48,6 +49,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     clearToken();
     router.replace("/login");
   };
+  const editDemoLibrary = async () => {
+    const res = await api<{ token: string }>("/auth/demo-template", { method: "POST" });
+    stashOwnerToken();
+    setToken(res.token);
+    location.assign("/");
+  };
+  const libraryName = user?.is_template ? "Demo library" : user?.is_guest ? "Demo sandbox" : user?.name ? `${user.name}'s Library` : "Library";
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
@@ -56,7 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mb-6 flex items-center gap-3">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-xs font-medium text-white">{initials(user)}</span>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium leading-tight">{user?.name ? `${user.name}'s Library` : "Library"}</p>
+            <p className="truncate text-sm font-medium leading-tight">{libraryName}</p>
             <p className="eyebrow">Personal Vault</p>
           </div>
         </div>
@@ -84,7 +92,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        {spend && (
+        {user?.is_owner && user.demo_enabled && (
+          <button onClick={editDemoLibrary} className="mt-6 flex items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm text-muted hover:bg-white/60">
+            <PencilRuler className="h-4 w-4" /> Edit demo library
+          </button>
+        )}
+        {spend && !user?.is_guest && (
           <div className="mt-auto pt-6" title="AI + OCR spend this month (hard cap)">
             <p className="eyebrow mb-1">
               AI budget ${spend.month_spent_usd.toFixed(2)} / ${spend.monthly_budget_usd.toFixed(2)}
@@ -97,12 +110,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-        <button onClick={logout} className="eyebrow flex items-center justify-center gap-1.5 pt-4 hover:text-ink">
-          <LogOut className="h-3 w-3" /> Sign out
+        <button onClick={logout} className={`eyebrow flex items-center justify-center gap-1.5 pt-4 hover:text-ink ${user?.is_guest ? "mt-auto" : ""}`}>
+          <LogOut className="h-3 w-3" /> {user?.is_guest ? "Leave demo" : "Sign out"}
         </button>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0">
+        {user && <DemoBanner user={user} usage={spend} />}
         <header className="flex items-center justify-between px-4 py-3 md:hidden">
           <Link href="/" className="flex items-center gap-2 font-serif text-xl">
             <FolderOpen className="h-5 w-5" /> Library
