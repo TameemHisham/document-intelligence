@@ -104,8 +104,7 @@ resource "google_cloud_run_v2_service" "worker" {
       cloud_sql_instance { instances = [google_sql_database_instance.db.connection_name] }
     }
     containers {
-      image   = local.placeholder_image
-      command = ["sh", "-c", "exec uvicorn app.worker:app --host 0.0.0.0 --port $PORT"]
+      image = local.placeholder_image
       resources {
         limits            = { cpu = "2", memory = "4Gi" }
         cpu_idle          = true
@@ -117,6 +116,7 @@ resource "google_cloud_run_v2_service" "worker" {
       }
       dynamic "env" {
         for_each = merge(local.common_env, {
+          APP_MODULE           = "app.worker:app"
           PUBSUB_PUSH_AUDIENCE = local.worker_url
           PUBSUB_PUSH_SA_EMAIL = google_service_account.pubsub_push.email
         })
@@ -144,7 +144,7 @@ resource "google_cloud_run_v2_service" "worker" {
   }
 
   lifecycle {
-    ignore_changes = [template[0].containers[0].image, template[0].containers[0].command, client, client_version]
+    ignore_changes = [template[0].containers[0].image, client, client_version]
   }
   depends_on = [google_secret_manager_secret_iam_member.access, google_secret_manager_secret_version.anthropic_placeholder]
 }

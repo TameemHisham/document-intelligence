@@ -49,7 +49,7 @@ jobs:
       - name: Deploy API and worker (same image)
         run: |
           gcloud run deploy api    --image "$REPO/backend:$TAG" --region "$REGION" --quiet
-          gcloud run deploy worker --image "$REPO/backend:$TAG" --region "$REGION" --quiet  # keeps the worker command set by Terraform
+          gcloud run deploy worker --image "$REPO/backend:$TAG" --region "$REGION" --quiet  # APP_MODULE env (set by Terraform) selects the worker app
 
       - name: Build & push frontend
         run: |

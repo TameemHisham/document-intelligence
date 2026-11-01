@@ -1,4 +1,4 @@
-# One image, two Cloud Run services: api (default CMD) and worker (uvicorn app.worker:app).
+# One image, two Cloud Run services: api (default) and worker (APP_MODULE=app.worker:app).
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 HF_HOME=/models
@@ -18,5 +18,5 @@ COPY app ./app
 RUN useradd --uid 10001 --no-create-home app
 USER app
 
-ENV PORT=8080
-CMD exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1
+ENV PORT=8080 APP_MODULE=app.main:app
+CMD exec uvicorn ${APP_MODULE} --host 0.0.0.0 --port ${PORT} --workers 1
