@@ -1,0 +1,13 @@
+# Local Postgres + pgvector, to run the backend in its cloud configuration:
+#   docker compose up -d
+#   DATABASE_URL=postgresql+psycopg://postgres:pg@localhost:5433/di VECTOR_BACKEND=pgvector uvicorn app.main:app
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: pg
+      POSTGRES_DB: di
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+volumes:
+  pgdata:

@@ -1,0 +1,33 @@
+# Secrets - never commit
+.env
+.env.*
+!.env.example
+!.env.local.example
+*.pem
+*-key.json
+service-account*.json
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# App data (uploads, SQLite DB, FAISS indexes, backups)
+backend/data/
+
+# Node / Next
+node_modules/
+.next/
+*.tsbuildinfo
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+.terraform.lock.hcl
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
