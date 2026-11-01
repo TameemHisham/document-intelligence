@@ -1,0 +1,63 @@
+# Keyless deploys: GitHub's OIDC token is exchanged via Workload Identity Federation for a short-lived
+# token of the di-deployer service account. No JSON keys exist anywhere.
+#
+# Repo → Settings → Secrets and variables → Actions → Variables:
+#   GCP_PROJECT, GCP_REGION, GCP_WIF_PROVIDER, GCP_DEPLOYER_SA, GOOGLE_CLIENT_ID   (from `terraform output`)
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required to mint the OIDC token for WIF
+    env:
+      REGION: ${{ vars.GCP_REGION }}
+      REPO: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/document-intelligence
+      TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+
+      - name: Build & push backend
+        run: |
+          docker build -t "$REPO/backend:$TAG" backend
+          docker push "$REPO/backend:$TAG"
+
+      - name: Deploy API and worker (same image)
+        run: |
+          gcloud run deploy api    --image "$REPO/backend:$TAG" --region "$REGION" --quiet
+          gcloud run deploy worker --image "$REPO/backend:$TAG" --region "$REGION" --quiet  # keeps the worker command set by Terraform
+
+      - name: Build & push frontend
+        run: |
+          API_URL=$(gcloud run services describe api --region "$REGION" --format 'value(status.url)')
+          docker build -t "$REPO/web:$TAG" \
+            --build-arg NEXT_PUBLIC_API_URL="$API_URL" \
+            --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID="${{ vars.GOOGLE_CLIENT_ID }}" \
+            frontend
+          docker push "$REPO/web:$TAG"
+
+      - name: Deploy web
+        run: gcloud run deploy web --image "$REPO/web:$TAG" --region "$REGION" --quiet
