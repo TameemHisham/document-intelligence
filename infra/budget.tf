@@ -9,9 +9,9 @@ resource "google_billing_budget" "monthly" {
     projects = ["projects/${data.google_project.this.number}"]
   }
   amount {
+    # currency_code omitted: must match the billing account's currency (e.g. GBP), so let it default
     specified_amount {
-      currency_code = "USD"
-      units         = tostring(var.gcp_budget_usd)
+      units = tostring(var.gcp_budget_usd)
     }
   }
   threshold_rules { threshold_percent = 0.5 }

@@ -46,7 +46,7 @@ variable "billing_account" {
 }
 
 variable "gcp_budget_usd" {
-  description = "GCP billing budget for alert emails (infrastructure: Cloud SQL, Cloud Run, storage)"
+  description = "GCP billing budget for alert emails, in the billing account's currency (infrastructure: Cloud SQL, Cloud Run, storage)"
   type        = number
   default     = 25
 }
