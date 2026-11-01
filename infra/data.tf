@@ -5,6 +5,7 @@ resource "google_storage_bucket" "files" {
   public_access_prevention    = "enforced"
   force_destroy               = false
   versioning { enabled = false }
+  depends_on = [google_project_service.apis]
 }
 
 resource "google_sql_database_instance" "db" {

@@ -3,26 +3,31 @@
 resource "google_service_account" "api" {
   account_id   = "di-api"
   display_name = "Document Intelligence API"
+  depends_on   = [google_project_service.apis]
 }
 
 resource "google_service_account" "worker" {
   account_id   = "di-worker"
   display_name = "Document Intelligence ingest worker"
+  depends_on   = [google_project_service.apis]
 }
 
 resource "google_service_account" "web" {
   account_id   = "di-web"
   display_name = "Document Intelligence frontend (no permissions)"
+  depends_on   = [google_project_service.apis]
 }
 
 resource "google_service_account" "pubsub_push" {
   account_id   = "di-pubsub-push"
   display_name = "Pub/Sub push identity (invokes the worker)"
+  depends_on   = [google_project_service.apis]
 }
 
 resource "google_service_account" "deployer" {
   account_id   = "di-deployer"
   display_name = "GitHub Actions deployer (via Workload Identity Federation)"
+  depends_on   = [google_project_service.apis]
 }
 
 # --- API: Cloud SQL, read/write its bucket, publish ingest jobs, call Gemini on Vertex, read its secrets

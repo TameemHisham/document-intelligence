@@ -4,7 +4,8 @@ resource "google_pubsub_topic" "ingest" {
 }
 
 resource "google_pubsub_topic" "ingest_dead_letter" {
-  name = "ingest-dead-letter"
+  name       = "ingest-dead-letter"
+  depends_on = [google_project_service.apis]
 }
 
 resource "google_pubsub_subscription" "ingest_dead_letter" {

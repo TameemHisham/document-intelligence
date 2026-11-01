@@ -17,4 +17,5 @@ resource "google_billing_budget" "monthly" {
   threshold_rules { threshold_percent = 0.5 }
   threshold_rules { threshold_percent = 0.9 }
   threshold_rules { threshold_percent = 1.0 }
+  depends_on = [google_project_service.apis]
 }
