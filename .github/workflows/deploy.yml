@@ -20,6 +20,7 @@ jobs:
 
   deploy:
     needs: ci
+    if: vars.GCP_WIF_PROVIDER != '' # skip until the GCP variables exist (see README)
     runs-on: ubuntu-latest
     permissions:
       contents: read
