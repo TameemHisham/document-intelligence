@@ -38,6 +38,8 @@ resource "google_project_service" "apis" {
     "iamcredentials.googleapis.com",
     "sts.googleapis.com",
     "billingbudgets.googleapis.com",
+    "cloudresourcemanager.googleapis.com", # also enable by hand on a brand-new project (Terraform reads it first)
+    "serviceusage.googleapis.com",
   ])
   service            = each.value
   disable_on_destroy = false
