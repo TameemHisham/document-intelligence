@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import classifier, qa, query_parser, usage
+from app import classifier, demo, qa, query_parser, usage
 from app.auth import current_user
 from app.db import get_db
 from app.models import Category, Document, Project, User
@@ -223,4 +223,7 @@ def ask(body: AskIn, user: User = Depends(limit("ask")), db: Session = Depends(g
 
 @router.get("/usage")
 def get_usage(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return usage.summary(db, user.id)
+    out = usage.summary(db, user.id)
+    if user.is_guest:
+        out["demo"] = demo.guest_limits(db, user)
+    return out

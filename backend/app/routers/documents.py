@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.auth import check_file_token, current_user
 from app.config import get_settings
 from app.db import get_db
-from app import classifier
+from app import classifier, demo
 from app.ingest import remove_vectors
 from app.search import doc_date
 from app.tasks import enqueue
@@ -54,6 +54,10 @@ async def upload(
     db: Session = Depends(get_db),
 ):
     s = get_settings()
+    if user.is_guest:
+        left = demo.guest_limits(db, user)["uploads_left"]
+        if len(files) > left:
+            raise HTTPException(429, f"Demo limit: {s.demo_guest_uploads} uploads per sandbox ({left} left).")
     if len(files) > s.max_files_per_request:
         raise HTTPException(400, f"Upload at most {s.max_files_per_request} files at a time.")
     total = db.query(func.count(Document.id)).filter(Document.user_id == user.id).scalar()
@@ -172,7 +176,7 @@ def bulk(body: BulkIn, user: User = Depends(current_user), db: Session = Depends
     elif body.action == "delete":
         for d in docs:
             remove_vectors(db, d)
-            get_storage().delete(d.storage_key)
+            delete_file(db, d)
             db.delete(d)
     db.commit()
     return BulkOut(updated=len(docs))
@@ -203,9 +207,18 @@ def reprocess(document_id: str, background: BackgroundTasks, user: User = Depend
 def delete_document(document_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)):
     doc = owned(db, user, document_id)
     remove_vectors(db, doc)
-    get_storage().delete(doc.storage_key)
+    delete_file(db, doc)
     db.delete(doc)
     db.commit()
+
+
+def delete_file(db: Session, doc: Document) -> None:
+    """Demo copies share the template's file; only delete a file nobody else references."""
+    if doc.storage_shared:
+        return
+    others = db.query(func.count(Document.id)).filter(Document.storage_key == doc.storage_key, Document.id != doc.id).scalar()
+    if not others:
+        get_storage().delete(doc.storage_key)
 
 
 @router.get("/{document_id}/file")

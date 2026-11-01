@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.models import ApiUsage
+from app.models import ApiUsage, User
 
 # USD per 1M tokens (input, output). Unknown models are priced at the most expensive tier.
 PRICES = {
@@ -53,8 +53,23 @@ def check_ai(db: Session, user_id: str) -> None:
     check_claude(db, user_id)
 
 
-def check_claude(db: Session, user_id: str) -> None:
+def _is_guest(db: Session, user_id: str) -> bool:
+    u = db.get(User, user_id)
+    return bool(u and u.is_guest)
+
+
+def check_claude(db: Session, user_id: str, kind: str = "") -> None:
     s = get_settings()
+    if _is_guest(db, user_id):
+        demo = float(db.query(func.coalesce(func.sum(ApiUsage.cost_usd), 0.0))
+                     .filter(ApiUsage.created_at >= _month_start(), ApiUsage.guest.is_(True)).scalar())
+        if demo >= s.demo_monthly_budget_usd:
+            raise LimitExceeded("The demo's AI allowance for this month is used up - search and browsing still work.")
+        if kind == "ask":
+            asked = db.query(func.count(ApiUsage.id)).filter(ApiUsage.user_id == user_id, ApiUsage.kind == "ask").scalar()
+            if asked >= s.demo_guest_questions:
+                raise LimitExceeded(f"Demo limit reached: {s.demo_guest_questions} questions per sandbox. "
+                                    "Clone the repo to run your own copy.")
     month = spent_usd(db, _month_start())
     if month >= s.monthly_budget_usd:
         raise LimitExceeded(
@@ -76,7 +91,7 @@ def claude_cost(model: str, usage) -> float:
 def record_claude(db: Session, user_id: str, kind: str, model: str, usage) -> float:
     cost = claude_cost(model, usage)
     db.add(ApiUsage(
-        user_id=user_id, kind=kind, model=model,
+        user_id=user_id, kind=kind, model=model, guest=_is_guest(db, user_id),
         input_tokens=getattr(usage, "input_tokens", 0) or 0,
         output_tokens=getattr(usage, "output_tokens", 0) or 0,
         cost_usd=cost,
@@ -99,7 +114,8 @@ def check_ocr(db: Session) -> None:
 
 def record_ocr(db: Session, user_id: str) -> None:
     # Counted at list price even inside the free tier, so the budget stays conservative.
-    db.add(ApiUsage(user_id=user_id, kind="ocr", model="google-vision", cost_usd=VISION_USD_PER_IMAGE))
+    db.add(ApiUsage(user_id=user_id, kind="ocr", model="google-vision", cost_usd=VISION_USD_PER_IMAGE,
+                    guest=_is_guest(db, user_id)))
     db.commit()
 
 

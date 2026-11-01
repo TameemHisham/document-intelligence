@@ -38,6 +38,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String)
     name: Mapped[str] = mapped_column(String, default="")
     picture: Mapped[str] = mapped_column(String, default="")
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False)  # demo sandbox user
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
 
@@ -60,6 +62,7 @@ class Document(Base):
     filename: Mapped[str] = mapped_column(String)
     mime: Mapped[str] = mapped_column(String)
     storage_key: Mapped[str] = mapped_column(String)
+    storage_shared: Mapped[bool] = mapped_column(Boolean, default=False)  # demo copy: file belongs to the template
     kind: Mapped[str] = mapped_column(String, default="photo")  # "photo" | "document"
     status: Mapped[str] = mapped_column(String, default="pending")  # pending | processing | ready | failed
     processing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -137,6 +140,7 @@ class ApiUsage(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[str] = mapped_column(String, index=True)
     kind: Mapped[str] = mapped_column(String, index=True)  # describe | ask | ocr | parse
+    guest: Mapped[bool] = mapped_column(Boolean, default=False, index=True)  # counts against the demo budget
     model: Mapped[str] = mapped_column(String)
     input_tokens: Mapped[int] = mapped_column(Integer, default=0)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)

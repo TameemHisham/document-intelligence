@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     gemini_use_vertex: bool = False  # on GCP: Vertex AI via the service account, no key
     gemini_model: str = "gemini-2.5-flash-lite"
 
+    # Public demo: one-click guest sandboxes cloned from a template library
+    demo_enabled: bool = False
+    owner_emails: str = ""  # comma-separated; only these may use Google sign-in (empty = anyone)
+    demo_monthly_budget_usd: float = 2.0  # all guests together; part of monthly_budget_usd
+    demo_guest_questions: int = 15
+    demo_guest_uploads: int = 5
+    demo_ttl_hours: int = 24
+    demo_sessions_per_ip_per_hour: int = 5
+    demo_sessions_per_day: int = 200
+
     # Category grouping
     group_name_similarity: float = 0.8  # SBERT cosine for "Gym notes" ~ "Workout notes"
     merge_centroid_similarity: float = 0.92  # CLIP centroid cosine for categories with similar photos
@@ -86,6 +96,10 @@ class Settings(BaseSettings):
     @classmethod
     def _placeholder_means_unset(cls, v: str) -> str:
         return "" if v.strip().startswith("REPLACE_ME") else v.strip()
+
+    @property
+    def owners(self) -> set[str]:
+        return {e.strip().lower() for e in self.owner_emails.split(",") if e.strip()}
 
     @property
     def db_url(self) -> str:

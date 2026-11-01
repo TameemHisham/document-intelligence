@@ -92,7 +92,7 @@ def answer(db: Session, user_id: str, question: str, docs: list[Document], histo
     if client is None:  # offline fallback so the pipeline is debuggable without a key
         s = sources[0]
         return Answer(f"(No ANTHROPIC_API_KEY set - showing the best matching passage.) {s.text} [1]", [s])
-    usage.check_claude(db, user_id)
+    usage.check_claude(db, user_id, kind="ask")
 
     # Bounded history: last 6 turns, each truncated, so follow-ups can't grow the prompt without limit.
     messages = [

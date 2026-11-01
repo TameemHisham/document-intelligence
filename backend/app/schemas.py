@@ -15,6 +15,11 @@ class UserOut(BaseModel):
     email: str
     name: str
     picture: str
+    is_guest: bool = False
+    is_owner: bool = False
+    is_template: bool = False
+    expires_at: datetime | None = None
+    demo_enabled: bool = False
 
 
 class AuthOut(BaseModel):

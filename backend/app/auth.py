@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -64,6 +65,20 @@ def verify_google_credential(credential: str) -> dict:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"invalid Google credential: {e}")
 
 
+def check_owner(email: str) -> None:
+    """When OWNER_EMAILS is set, only those accounts may sign in with Google (visitors use the demo)."""
+    owners = get_settings().owners
+    if owners and email.lower() not in owners:
+        msg = "This is a demo deployment - use “Try the demo” to explore." if get_settings().demo_enabled \
+            else "This account isn't allowed to sign in."
+        raise HTTPException(status.HTTP_403_FORBIDDEN, msg)
+
+
+def is_owner(user: User) -> bool:
+    owners = get_settings().owners
+    return not user.is_guest and (not owners or user.email.lower() in owners)
+
+
 def upsert_user(db: Session, sub: str, email: str, name: str = "", picture: str = "") -> User:
     user = db.query(User).filter_by(google_sub=sub).one_or_none()
     if user is None:
@@ -89,5 +104,11 @@ def current_user(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "wrong token type")
     user = db.get(User, claims["sub"])
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "user not found")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Session not found - start a new one.")
+    if user.is_guest and user.expires_at and _aware(user.expires_at) < datetime.now(timezone.utc):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Your demo sandbox expired - start a fresh one.")
     return user
+
+
+def _aware(dt: datetime) -> datetime:
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)  # SQLite returns naive datetimes
