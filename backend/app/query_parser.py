@@ -132,7 +132,7 @@ def _gemini():
 
     s = get_settings()
     if s.gemini_use_vertex:
-        return genai.Client(vertexai=True, project=s.gcp_project or None, location=s.gcp_location)
+        return genai.Client(vertexai=True, project=s.gcp_project or None, location=s.gemini_location)
     return genai.Client(api_key=s.gemini_api_key)
 
 

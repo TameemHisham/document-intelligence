@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_use_vertex: bool = False  # on GCP: Vertex AI via the service account, no key
     gemini_model: str = "gemini-2.5-flash-lite"
+    gemini_location: str = "global"  # Vertex endpoint for Gemini (widest model availability)
 
     # Public demo: one-click guest sandboxes cloned from a template library
     demo_enabled: bool = False
