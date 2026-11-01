@@ -52,6 +52,8 @@ resource "google_cloud_run_v2_service" "api" {
           GOOGLE_CLIENT_ID  = var.google_client_id
           FRONTEND_ORIGIN   = local.web_url
           DEV_AUTH          = "false"
+          DEMO_ENABLED      = tostring(var.demo_enabled)
+          OWNER_EMAILS      = var.owner_emails
         })
         content {
           name  = env.key

@@ -57,6 +57,7 @@ jobs:
           docker build -t "$REPO/web:$TAG" \
             --build-arg NEXT_PUBLIC_API_URL="$API_URL" \
             --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID="${{ vars.GOOGLE_CLIENT_ID }}" \
+            --build-arg NEXT_PUBLIC_DEMO=true \
             frontend
           docker push "$REPO/web:$TAG"
 

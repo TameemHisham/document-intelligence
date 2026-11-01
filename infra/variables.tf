@@ -56,3 +56,14 @@ variable "max_instances" {
   type        = number
   default     = 3
 }
+
+variable "owner_emails" {
+  description = "Comma-separated emails allowed to sign in with Google (full access); everyone else uses the guest demo"
+  type        = string
+}
+
+variable "demo_enabled" {
+  description = "Offer one-click guest sandboxes to visitors"
+  type        = bool
+  default     = true
+}
