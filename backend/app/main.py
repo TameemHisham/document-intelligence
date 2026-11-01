@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Document Intelligence API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[get_settings().frontend_origin],
+        allow_origins=get_settings().cors_origins,
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],

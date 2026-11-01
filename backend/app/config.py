@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     file_token_ttl_minutes: int = 60
     google_client_id: str = ""
     dev_auth: bool = False  # enables POST /auth/dev (local testing without Google)
-    frontend_origin: str = "http://localhost:3000"
+    frontend_origin: str = "http://localhost:3000"  # comma-separated (Cloud Run serves two URLs)
 
     # Backends: local dev defaults vs. cloud (Cloud Run + Cloud SQL + Pub/Sub)
     vector_backend: Literal["faiss", "pgvector"] = "faiss"
@@ -102,6 +102,10 @@ class Settings(BaseSettings):
     @property
     def owners(self) -> set[str]:
         return {e.strip().lower() for e in self.owner_emails.split(",") if e.strip()}
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.frontend_origin.split(",") if o.strip()]
 
     @property
     def db_url(self) -> str:

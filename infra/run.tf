@@ -50,7 +50,7 @@ resource "google_cloud_run_v2_service" "api" {
           GEMINI_USE_VERTEX = "true"
           GEMINI_MODEL      = var.gemini_model
           GOOGLE_CLIENT_ID  = var.google_client_id
-          FRONTEND_ORIGIN   = local.web_url
+          FRONTEND_ORIGIN   = "${local.web_url},${google_cloud_run_v2_service.web.uri}"
           DEV_AUTH          = "false"
           DEMO_ENABLED      = tostring(var.demo_enabled)
           OWNER_EMAILS      = var.owner_emails
