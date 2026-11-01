@@ -15,7 +15,7 @@ S('sentence-transformers/all-MiniLM-L6-v2'); S('sentence-transformers/clip-ViT-B
 ENV HF_HUB_OFFLINE=1
 
 COPY app ./app
-RUN useradd --uid 10001 --no-create-home app
+RUN useradd --uid 10001 --no-create-home app && mkdir data && chown app data  # scratch space; durable state is in Cloud SQL + GCS
 USER app
 
 ENV PORT=8080 APP_MODULE=app.main:app
