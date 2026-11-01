@@ -20,13 +20,15 @@ def engine():
         url = get_settings().db_url
         _engine = create_engine(
             url,
-            connect_args={"check_same_thread": False} if url.startswith("sqlite") else {},
+            # timeout: wait for locks instead of failing when ingest tasks write concurrently
+            connect_args={"check_same_thread": False, "timeout": 30} if url.startswith("sqlite") else {},
             pool_pre_ping=True,
         )
         if url.startswith("sqlite"):
             @event.listens_for(_engine, "connect")
             def _fk_on(conn, _):
                 conn.execute("PRAGMA foreign_keys=ON")
+                conn.execute("PRAGMA journal_mode=WAL")  # readers don't block the writer
         _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
 
