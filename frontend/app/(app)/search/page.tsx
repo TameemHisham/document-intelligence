@@ -9,7 +9,7 @@ import { PhotoGrid } from "@/components/PhotoGrid";
 import { SelectionBar } from "@/components/SelectionBar";
 import { AskPanel } from "@/components/AskPanel";
 
-const EXAMPLES = ["warranty", "mountain in the background", "receipts over 40 euros", "photos from last summer", "black hoodie"];
+const EXAMPLES = ["warranty", "mountain in the background", "receipts over 40 euros", "photos from last summer", "person wearing a hoodie"];
 
 const fmt = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
