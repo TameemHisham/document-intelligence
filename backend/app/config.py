@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -108,6 +109,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    s = Settings()
+    # Tests set DI_IGNORE_DOTENV so a developer's local .env can't change their behaviour.
+    s = Settings(_env_file=None) if os.environ.get("DI_IGNORE_DOTENV") else Settings()
     s.data_dir.mkdir(parents=True, exist_ok=True)
     return s

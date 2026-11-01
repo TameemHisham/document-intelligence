@@ -5,6 +5,7 @@ import pytest
 
 # Run the whole suite against Postgres + pgvector with:
 #   TEST_DATABASE_URL=postgresql+psycopg://postgres:pg@localhost:55432/di pytest
+os.environ["DI_IGNORE_DOTENV"] = "1"  # never read the developer's backend/.env in tests
 PG_URL = os.environ.get("TEST_DATABASE_URL", "")
 if PG_URL:
     os.environ["DATABASE_URL"] = PG_URL
