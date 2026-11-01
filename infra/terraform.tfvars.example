@@ -1,0 +1,5 @@
+project_id       = "my-gcp-project"
+region           = "us-central1"
+github_repo      = "your-github-user/document-intelligence"
+google_client_id = "xxxx.apps.googleusercontent.com"
+billing_account  = "" # e.g. "012345-6789AB-CDEF01" to enable budget alert emails
